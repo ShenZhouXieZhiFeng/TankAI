@@ -1,0 +1,9 @@
+**************************************
+CHANGELOG
+**************************************
+v1.0
+- initial version.
+
+v1.0.1
+- submitted using clean project to fix falsely detected activation of Unity services
+- added API compatibility for Unity 5.5
