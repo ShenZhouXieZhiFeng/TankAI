@@ -4,12 +4,10 @@ using UnityEngine;
 
 public class Tank : MonoBehaviour {
 
-    public float maxSpeed;
-    public float maxTorque;
-
-    public float shootCoolDown;
-    public Transform shootPoint;
-    public GameController bullet;
+    public float MaxSpeed;
+    public float MaxTorque;
+    public float ShootCoolDown;
+    public Transform ShootPoint;
 
     Rigidbody m_rigidbody;
 
@@ -18,18 +16,36 @@ public class Tank : MonoBehaviour {
     }
 	
 	void Update () {
-        float h = Input.GetAxis("Horizontal");
-        float v = Input.GetAxis("Vertical");
-        SetMove(v);
-        SetRotate(h);
+        if (Input.GetMouseButtonDown(0)) {
+            shoot();
+        }
 	}
 
-    public void SetMove(float dir) {
-        m_rigidbody.velocity = transform.forward * maxSpeed * dir;
+    public void ApplyBehavior() {
+
     }
 
-    public void SetRotate(float dir) {
-        m_rigidbody.angularVelocity = transform.up * maxTorque * dir;
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!other.CompareTag("Bullet"))
+            return;
+        takeDamage();
+    }
+
+    void setMove(float dir) {
+        m_rigidbody.velocity = transform.forward * MaxSpeed * dir;
+    }
+
+    void setRotate(float dir) {
+        m_rigidbody.angularVelocity = transform.up * MaxTorque * dir;
+    }
+
+    void shoot() {
+        BulletPool.Instance.GetBullet(ShootPoint, ShootPoint.forward);
+    }
+
+    void takeDamage() {
+        gameObject.SetActive(false);
     }
 
 }
