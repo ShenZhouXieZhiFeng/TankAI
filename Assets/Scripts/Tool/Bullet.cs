@@ -5,6 +5,9 @@ public class Bullet : MonoBehaviour {
     [Header("子弹射速")]
     public float ShootSpeed = 100.0f;
 
+    [HideInInspector]
+    public GameObject Owner;
+
     Rigidbody m_rigibody;
 
     private void Awake()
@@ -16,7 +19,6 @@ public class Bullet : MonoBehaviour {
     {
         Invoke("destory", 3);
     }
-
     public void Shoot(Vector3 _dir) {
         m_rigibody.AddForce(_dir * ShootSpeed);
     }

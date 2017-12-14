@@ -12,7 +12,7 @@ public class BulletPool : SingletonMono<BulletPool> {
 
     private Stack<Bullet> poolStack = new Stack<Bullet>();
 
-    public Bullet GetBullet(Transform _initPos, Vector3 _shootDir) {
+    public Bullet GetBullet(GameObject _owner,Transform _initPos, Vector3 _shootDir) {
         Bullet returnBullet = null;
         if (poolStack.Count == 0)
         {
@@ -23,6 +23,7 @@ public class BulletPool : SingletonMono<BulletPool> {
             returnBullet = poolStack.Pop();
             returnBullet.gameObject.SetActive(true);
         }
+        returnBullet.Owner = _owner;
         returnBullet.transform.position = _initPos.position;
         returnBullet.transform.rotation = _initPos.rotation;
 

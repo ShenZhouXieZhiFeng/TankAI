@@ -72,14 +72,20 @@ public class Tank : MonoBehaviour {
     }
 
     public void SetInputs(double[] inputs) {
-
+        CurrentInput.moveInput = (float)inputs[0];
+        CurrentInput.rotaInput = (float)inputs[1];
+        CurrentInput.shootInput = (float)inputs[2];
     }
 
+    Bullet _bullet = null;
     private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag("Bullet"))
             return;
-        takeDamage();
+        _bullet = other.GetComponent<Bullet>();
+        if (_bullet != null && _bullet.Owner != gameObject) {
+            takeDamage();
+        }
     }
 
     public void setMove(float dir) {
@@ -97,7 +103,7 @@ public class Tank : MonoBehaviour {
             return;
         CanShoot = false;
         Invoke("resetShoot", ShootCoolDown);
-        BulletPool.Instance.GetBullet(ShootPoint, ShootPoint.forward);
+        BulletPool.Instance.GetBullet(gameObject, ShootPoint, ShootPoint.forward);
     }
 
     public void Stop() {
@@ -116,6 +122,7 @@ public class Tank : MonoBehaviour {
     #endregion
     
 }
+
 public struct TankInputModel
 {
     /// <summary>

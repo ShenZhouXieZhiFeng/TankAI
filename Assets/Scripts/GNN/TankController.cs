@@ -53,7 +53,6 @@ public class TankController : MonoBehaviour {
 
     #endregion
 
-
     #region 方法
     private void Awake()
     {
@@ -88,6 +87,13 @@ public class TankController : MonoBehaviour {
     }
 
     /// <summary>
+    /// 击杀得分
+    /// </summary>
+    public void KillSomeOne() {
+        CurrentScore++;
+    }
+
+    /// <summary>
     /// 重启
     /// </summary>
     public void Restart() {
@@ -100,6 +106,7 @@ public class TankController : MonoBehaviour {
     /// 死亡
     /// </summary>
     public void Die() {
+        CurrentScore -= 5;
         this.enabled = false;
         Tank.Stop();
         Tank.enabled = false;
