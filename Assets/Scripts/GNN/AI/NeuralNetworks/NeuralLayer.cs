@@ -5,7 +5,7 @@ public class NeuralLayer{
     private static Random randomizer = new Random();
 
     
-    public delegate double ActivationFunction(double xValue);
+    public delegate float ActivationFunction(float xValue);
     /// <summary>
     /// 激活函数
     /// </summary>
@@ -34,7 +34,7 @@ public class NeuralLayer{
     /// <summary>
     /// 权重矩阵
     /// </summary>
-    public double[,] Weights
+    public float[,] Weights
     {
         get;
         private set;
@@ -48,7 +48,7 @@ public class NeuralLayer{
         this.NeuronCount = nodeCount;
         this.OutputCount = outputCount;
         //初始化权重矩阵
-        Weights = new double[nodeCount + 1, outputCount];
+        Weights = new float[nodeCount + 1, outputCount];
     }
 
     /// <summary>
@@ -56,15 +56,15 @@ public class NeuralLayer{
     /// </summary>
     /// <param name="inputs"></param>
     /// <returns></returns>
-    public double[] ProcessInput(double[] inputs) {
+    public float[] ProcessInput(float[] inputs) {
         if (inputs.Length != NeuronCount)
             throw new ArgumentException("Given xValues do not match layer input count.");
 
-        double[] sums = new double[OutputCount];
+        float[] sums = new float[OutputCount];
         //加权偏差
-        double[] biasedInputs = new double[NeuronCount + 1];
+        float[] biasedInputs = new float[NeuronCount + 1];
         inputs.CopyTo(biasedInputs, 0);
-        biasedInputs[inputs.Length] = 1.0;
+        biasedInputs[inputs.Length] = 1.0f;
 
         //矩阵乘法
         for (int j = 0; j < Weights.GetLength(1); j++) {
@@ -89,7 +89,7 @@ public class NeuralLayer{
     /// <returns></returns>
     public NeuralLayer DeepCopy() {
         //Copy weights
-        double[,] copiedWeights = new double[this.Weights.GetLength(0), this.Weights.GetLength(1)];
+        float[,] copiedWeights = new float[this.Weights.GetLength(0), this.Weights.GetLength(1)];
 
         for (int x = 0; x < this.Weights.GetLength(0); x++)
             for (int y = 0; y < this.Weights.GetLength(1); y++)
@@ -108,12 +108,12 @@ public class NeuralLayer{
     /// </summary>
     /// <param name="minValue"></param>
     /// <param name="maxValue"></param>
-    public void SetRandomWeights(double minValue, double maxValue)
+    public void SetRandomWeights(float minValue, float maxValue)
     {
-        double range = Math.Abs(minValue - maxValue);
+        float range = Math.Abs(minValue - maxValue);
         for (int i = 0; i < Weights.GetLength(0); i++)
             for (int j = 0; j < Weights.GetLength(1); j++)
-                Weights[i, j] = minValue + (randomizer.NextDouble() * range); //random double between minValue and maxValue
+                Weights[i, j] = (float)(minValue + (randomizer.NextDouble() * range));
     }
 
     /// <summary>

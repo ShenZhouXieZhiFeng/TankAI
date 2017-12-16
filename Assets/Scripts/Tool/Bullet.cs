@@ -4,6 +4,12 @@ public class Bullet : MonoBehaviour {
 
     [Header("子弹射速")]
     public float ShootSpeed = 100.0f;
+    [Header("自销毁时间")]
+    public float DesoryTime = 2;
+
+    public float ShootDis = 5;
+
+    public LayerMask HitLayerMask;
 
     [HideInInspector]
     public GameObject Owner;
@@ -17,10 +23,17 @@ public class Bullet : MonoBehaviour {
 
     private void OnEnable()
     {
-        Invoke("destory", 3);
+        Invoke("destory", DesoryTime);
     }
     public void Shoot(Vector3 _dir) {
         m_rigibody.AddForce(_dir * ShootSpeed);
+        Ray ray = new Ray(transform.position, _dir);
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit, ShootDis,HitLayerMask)) {
+            TankController con = hit.transform.GetComponent<TankController>();
+            con.Die();
+            Owner.GetComponent<TankController>().KillSomeOne();
+        }
     }
 
     private void OnTriggerEnter(Collider other)

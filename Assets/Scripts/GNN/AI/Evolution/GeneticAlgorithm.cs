@@ -246,11 +246,6 @@ public class GeneticAlgorithm
         if (SortPopulation)
             currentPopulation.Sort();
 
-        //Fire fitness calculation finished event
-        //根据健壮性进行排序
-        if (FitnessCalculationFinished != null)
-            FitnessCalculationFinished(currentPopulation);
-
         //Check termination criterion
         //检查终止准则，比如遗传次数是否达到最大值
         if (TerminationCriterion != null && TerminationCriterion(currentPopulation))
@@ -261,7 +256,6 @@ public class GeneticAlgorithm
         }
 
         //Apply Selection
-        //应用选择,将上一轮走的最远的三个车子数据保存（默认方式）
         List<Genotype> intermediatePopulation = Selection(currentPopulation);
 
         //Apply Recombination
@@ -316,7 +310,6 @@ public class GeneticAlgorithm
     public static void DefaultFitnessCalculation(IEnumerable<Genotype> currentPopulation)
     {
         //First calculate average evaluation of whole population
-        //首先计算所有智能的平均评价(评价在遍历车辆时被更新)
         uint populationSize = 0;
         float overallEvaluation = 0;
         foreach (Genotype genotype in currentPopulation)
@@ -346,6 +339,8 @@ public class GeneticAlgorithm
         intermediatePopulation.Add(currentPopulation[0]);
         intermediatePopulation.Add(currentPopulation[1]);
         intermediatePopulation.Add(currentPopulation[2]);
+
+        TankManager.Instance.Prinf("最高得分为:" + currentPopulation[0].Evaluation);
 
         return intermediatePopulation;
     }

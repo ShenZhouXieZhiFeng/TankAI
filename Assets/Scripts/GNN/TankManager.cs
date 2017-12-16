@@ -29,17 +29,6 @@ public class TankManager : SingletonMono<TankManager> {
     void Start()
     {
         PrototypeTank.gameObject.SetActive(false);
-        
-    }
-
-    void Update()
-    {
-        //for (int i = 0; i < tanks.Count; i++) {
-        //    TankController tank = tanks[i];
-        //    if (tank.enabled) {
-                
-        //    }
-        //}
     }
 
     /// <summary>
@@ -47,36 +36,39 @@ public class TankManager : SingletonMono<TankManager> {
     /// </summary>
     public void Restart()
     {
+        foreach (TankController tank in tanks) {
+            randomSpawn(tank.transform);
+            tank.Restart();
+        }
+    }
 
+    public void TrainTanks() {
+        foreach (TankController c in tanks) {
+            if(c.isAlive)
+                c.Train();
+        }
     }
 
     public void SetTankAmount(int amount)
     {
         if (amount < 0) throw new ArgumentException("Amount may not be less than zero.");
-
         if (amount == TankCount) return;
-
         if (amount > tanks.Count)
         {
             for (int toBeAdded = amount - tanks.Count; toBeAdded > 0; toBeAdded--)
             {
                 GameObject carCopy = Instantiate(PrototypeTank.gameObject);
+                carCopy.transform.parent = transform;
                 TankController controllerCopy = carCopy.GetComponent<TankController>();
                 randomSpawn(carCopy.transform);
                 tanks.Add(controllerCopy);
                 carCopy.SetActive(true);
             }
         }
-        //else if (amount < tanks.Count)
-        //{
-        //    for (int toBeRemoved = tanks.Count - amount; toBeRemoved > 0; toBeRemoved--)
-        //    {
-        //        RaceCar last = cars[cars.Count - 1];
-        //        cars.RemoveAt(cars.Count - 1);
+    }
 
-        //        Destroy(last.Car.gameObject);
-        //    }
-        //}
+    public void Prinf(string msg) {
+        Debug.Log(msg);
     }
 
     /// <summary>
@@ -85,7 +77,7 @@ public class TankManager : SingletonMono<TankManager> {
     /// <param name="tr"></param>
     void randomSpawn(Transform tr) {
         float x = Random.Range(minSpawnX, maxSpawnX);
-        float z = Random.Range(minSpawZ, minSpawZ);
+        float z = Random.Range(minSpawZ, maxSpawZ);
         tr.position = new Vector3(x, PrototypeTank.transform.position.y, z);
     }
 

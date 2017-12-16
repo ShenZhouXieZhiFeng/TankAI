@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 /// <summary>
@@ -8,24 +9,31 @@ using UnityEngine;
 public class Tank : MonoBehaviour {
 
     #region 属性
-    //[Header("最大速度")]
-    private float MaxSpeed = 10;
-    //[Header("最大旋转")]
-    private float MaxTorque = 30;
-    //[Header("射速")]
-    private float ShootCoolDown = 2;
-    //[Header("最大检测距离")]
-    private float checkDis = 5;
+    [Header("最大速度")]
+    public float MaxSpeed = 10;
+    [Header("最大旋转")]
+    public float MaxTorque = 30;
+    [Header("射速")]
+    public float ShootCoolDown = 2;
+    [Header("最大检测距离")]
+    public float checkDis = 5;
     [Header("炮口")]
     public Transform ShootPoint;
+    [Header("EnemyMask")]
+    public LayerMask enemyMask;
 
     //tank渲染
     Transform tankRender;
+    Collider m_collider;
 
     /// <summary>
     /// 数据输入
     /// </summary>
+    [SerializeField]
     public TankInputModel CurrentInput = new TankInputModel(0, 0, 0);
+
+    public float inSpeed;
+    public float inRota;
 
     /// <summary>
     /// 数据输出
@@ -34,21 +42,28 @@ public class Tank : MonoBehaviour {
     {
         get {
             TankOutPutModel model = new TankOutPutModel();
-            model.canShoot = CanShoot ? 1 : 0;
-            model.speedPre = m_rigidbody.position.magnitude / MaxSpeed;
-            model.rotaPre = m_rigidbody.rotation.eulerAngles.sqrMagnitude / MaxTorque;
-            Collider[] res = Physics.OverlapSphere(transform.position, checkDis, 1 << 8);
-            if (res.Length == 0)
-            {
-                model.recentEnemyDis = 0;
-                model.checkEnemyNums = 0;
-            }
-            else {
-                model.recentEnemyDis = Vector3.Distance(transform.position, res[0].transform.position);
-                model.checkEnemyNums = res.Length;
-            }
+            Transform closestEnemy = getClosestEnemy();
+
+            model.closestEnemyDic = closestEnemy != null ? Vector3.Distance(transform.position, closestEnemy.position) / checkDis : 1f;
+            model.closestEnemyCos = closestEnemy != null ? Vector3.Dot(transform.right, (closestEnemy.position - transform.position).normalized) : 1f;
+            model.canShoot = CanShoot ? 1f : 0f;
+            model.speed = m_rigidbody.velocity.magnitude / MaxSpeed;
+            model.torque = m_rigidbody.angularVelocity.magnitude / MaxTorque;
+
             return model;
         }
+    }
+
+    /// <summary>
+    /// 查找最近的敌人
+    /// </summary>
+    /// <returns></returns>
+    Transform getClosestEnemy()
+    {
+        var cols = new List<Collider>(Physics.OverlapSphere(transform.position, checkDis, enemyMask));
+        cols.Remove(m_collider);
+        var firstOrDefault = cols.OrderBy(x => Vector3.Distance(transform.position, x.transform.position)).FirstOrDefault();
+        return firstOrDefault != null ? firstOrDefault.transform : null;
     }
 
     private bool CanShoot = true;
@@ -58,34 +73,25 @@ public class Tank : MonoBehaviour {
     #endregion
 
     #region 函数
-    void Start () {
+
+    private void Awake()
+    {
         tankRender = transform.Find("TankRenderers");
+        m_collider = GetComponent<Collider>();
         m_rigidbody = GetComponent<Rigidbody>();
         controller = GetComponent<TankController>();
     }
 
-    private void FixedUpdate()
-    {
+    public void SetInputs(float[] inputs) {
+        CurrentInput.moveInput = inputs[0];
+        CurrentInput.rotaInput = inputs[1];
+        CurrentInput.shootInput = inputs[2];
+        inSpeed = CurrentInput.moveInput;
+        inRota = CurrentInput.rotaInput;
+
         setMove(CurrentInput.moveInput);
         setRotate(CurrentInput.rotaInput);
         shoot(CurrentInput.shootInput);
-    }
-
-    public void SetInputs(double[] inputs) {
-        CurrentInput.moveInput = (float)inputs[0];
-        CurrentInput.rotaInput = (float)inputs[1];
-        CurrentInput.shootInput = (float)inputs[2];
-    }
-
-    Bullet _bullet = null;
-    private void OnTriggerEnter(Collider other)
-    {
-        if (!other.CompareTag("Bullet"))
-            return;
-        _bullet = other.GetComponent<Bullet>();
-        if (_bullet != null && _bullet.Owner != gameObject) {
-            takeDamage();
-        }
     }
 
     public void setMove(float dir) {
@@ -105,20 +111,25 @@ public class Tank : MonoBehaviour {
         Invoke("resetShoot", ShootCoolDown);
         BulletPool.Instance.GetBullet(gameObject, ShootPoint, ShootPoint.forward);
     }
-
-    public void Stop() {
-        tankRender.gameObject.SetActive(false);
-    }
-    public void Begin() {
-        tankRender.gameObject.SetActive(true);
-    }
-    void resetShoot() {
+    void resetShoot()
+    {
         CanShoot = true;
     }
 
-    void takeDamage() {
-        controller.Die();
+    public void Stop() {
+        m_rigidbody.Sleep();
+        m_collider.enabled = false;
+        tankRender.gameObject.SetActive(false);
     }
+    public void Begin() {
+        m_rigidbody.WakeUp();
+        m_collider.enabled = true;
+        tankRender.gameObject.SetActive(true);
+    }
+
+    //public void takeDamage() {
+    //    controller.Die();
+    //}
     #endregion
     
 }
@@ -137,17 +148,17 @@ public struct TankInputModel
     /// 发射输入
     /// </summary>
     public float shootInput;
-    public TankInputModel(float _moveInput,float _rotaInput,float _shootInput) {
+    public TankInputModel(float _moveInput, float _rotaInput, float _shootInput) {
         moveInput = _moveInput;
         rotaInput = _rotaInput;
         shootInput = _shootInput;
     }
-    public void FormDoubleArray(double[] inputs) {
+    public void FormDoubleArray(float[] inputs) {
         if (inputs == null || inputs.Length == 0)
             return;
-        moveInput = (float)inputs[0];
-        rotaInput = (float)inputs[1];
-        shootInput = (float)inputs[2];
+        moveInput = inputs[0];
+        rotaInput = inputs[1];
+        shootInput = inputs[2];
     }
 }
 
@@ -155,31 +166,31 @@ public struct TankOutPutModel {
     /// <summary>
     /// 当前移动百分比
     /// </summary>
-    public float speedPre;
+    public float closestEnemyDic;
     /// <summary>
     /// 当前旋转百分比
     /// </summary>
-    public float rotaPre;
+    public float closestEnemyCos;
     /// <summary>
     /// 最近敌人距离
     /// </summary>
-    public float recentEnemyDis;
+    public float canShoot;
     /// <summary>
     /// 检测距离内有多少敌人
     /// </summary>
-    public float checkEnemyNums;
+    public float speed;
     /// <summary>
     /// 是否可以射击
     /// </summary>
-    public float canShoot;
+    public float torque;
 
-    public double[] ToDoubleArray() {
-        double[] outs = new double[5];
-        outs[0] = speedPre;
-        outs[1] = rotaPre;
-        outs[2] = recentEnemyDis;
-        outs[3] = checkEnemyNums;
-        outs[4] = canShoot;
+    public float[] ToDoubleArray() {
+        float[] outs = new float[5];
+        outs[0] = closestEnemyDic;
+        outs[1] = closestEnemyCos;
+        outs[2] = canShoot;
+        outs[3] = speed;
+        outs[4] = torque;
         return outs;
     }
 }

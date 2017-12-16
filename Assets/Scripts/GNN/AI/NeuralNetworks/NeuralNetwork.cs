@@ -48,11 +48,11 @@ public class NeuralNetwork{
             Layers[i] = new NeuralLayer(topology[i], topology[i + 1]);
     }
 
-    public double[] ProcessInputs(double[] inputs) {
+    public float[] ProcessInputs(float[] inputs) {
         if(inputs.Length != Layers[0].NeuronCount)
             throw new ArgumentException("Given inputs do not match network input amount.");
 
-        double[] outs = inputs;
+        float[] outs = inputs;
         foreach (NeuralLayer lays in Layers) {
             outs = lays.ProcessInput(outs);
         }

@@ -9,6 +9,9 @@ public class TankController : MonoBehaviour {
 
     public bool IsUserController = false;
 
+    [HideInInspector]
+    public bool isAlive = true;
+
     #region 属性
     /// <summary>
     /// 大脑
@@ -72,31 +75,31 @@ public class TankController : MonoBehaviour {
             }
         }
 	}
-    private void FixedUpdate()
-    {
-        //从智能从获取控制输入
-        if (!IsUserController)
-        {
-            //获取传感器的参数,5个传感器的长度
-            double[] intputs = Tank.CurrentOutput.ToDoubleArray();
-            //神经网络处理，输出新的控制
-            double[] controlInputs = Agent.FNN.ProcessInputs(intputs);
-            //车辆制动
-            Tank.SetInputs(controlInputs);
-        }
+
+    public void Train() {
+        //获取传感器的参数,5个传感器的长度
+        float[] intputs = Tank.CurrentOutput.ToDoubleArray();
+        //神经网络处理，输出新的控制
+        float[] controlInputs = Agent.FNN.ProcessInputs(intputs);
+        Tank.SetInputs(controlInputs);
+    }
+
+    public void TriggerWall() {
+        CurrentScore -= 5;
     }
 
     /// <summary>
     /// 击杀得分
     /// </summary>
     public void KillSomeOne() {
-        CurrentScore++;
+        CurrentScore += 10;
     }
 
     /// <summary>
     /// 重启
     /// </summary>
     public void Restart() {
+        isAlive = true;
         Tank.enabled = true;
         Tank.Begin();
         this.enabled = true;
@@ -106,6 +109,7 @@ public class TankController : MonoBehaviour {
     /// 死亡
     /// </summary>
     public void Die() {
+        isAlive = false;
         CurrentScore -= 5;
         this.enabled = false;
         Tank.Stop();

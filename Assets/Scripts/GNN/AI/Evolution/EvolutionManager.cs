@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// 管理进过进化过程
@@ -9,6 +10,10 @@ public class EvolutionManager : SingletonMono<EvolutionManager> {
 
     #region 属性
     private static System.Random randomizer = new System.Random();
+
+    public float TimePerProcess = 20;
+    public Text times;
+    public Slider slider;
 
     // 每一代人口的规模
     [SerializeField]
@@ -62,6 +67,11 @@ public class EvolutionManager : SingletonMono<EvolutionManager> {
     private void Start()
     {
         StartEvolution();
+        slider.maxValue = TimePerProcess;
+    }
+
+    public void Restart() {
+        AllAgentsDied();
     }
 
     /// <summary>
@@ -69,11 +79,9 @@ public class EvolutionManager : SingletonMono<EvolutionManager> {
     /// </summary>
     public void StartEvolution()
     {
-        //Create neural network to determine parameter count
         //创建神经网络来确定参数计数
         NeuralNetwork nn = new NeuralNetwork(FNNTopology);
 
-        //Setup genetic algorithm
         //设置遗传算法
         geneticAlgorithm = new GeneticAlgorithm((uint)nn.WeightCount, (uint)PopulationSize);
 
@@ -102,7 +110,6 @@ public class EvolutionManager : SingletonMono<EvolutionManager> {
         //当所有的代理都死亡，进行人口评价，遗传计算，生成新人口
         AllAgentsDied += geneticAlgorithm.EvaluationFinished;
 
-        //Restart logic
         //重新启动逻辑
         if (RestartAfter > 0)
         {
@@ -147,15 +154,11 @@ public class EvolutionManager : SingletonMono<EvolutionManager> {
     private void StartEvaluation(IEnumerable<Genotype> currentPopulation)
     {
         //从上一代的人口中创建新的人口代理
-        //清空所有的车辆智能
         agents.Clear();
         AgentsAliveCount = 0;
-        //从基因型中重新生成车辆智能
         foreach (Genotype genotype in currentPopulation)
             agents.Add(new Agent(genotype, MathHelper.SoftSignFunction, FNNTopology));
-        //根据生成的智能数量，重新生成实体（小车）
         TankManager.Instance.SetTankAmount(agents.Count);
-        //遍历车辆和智能，为车辆赋予智能
         IEnumerator<TankController> carsEnum = TankManager.Instance.GetTankEnumerator();
         for (int i = 0; i < agents.Count; i++)
         {
@@ -164,7 +167,6 @@ public class EvolutionManager : SingletonMono<EvolutionManager> {
                 Debug.LogError("Tanks enum ended before agents.");
                 break;
             }
-
             carsEnum.Current.Agent = agents[i];
             AgentsAliveCount++;
             //指定死亡回调
