@@ -29,7 +29,7 @@ public class CgaBob : MonoBehaviour {
 
     private int mFittestGenome;
     private double mBestFitNessScore;
-    private double mTotalFittnessScore;
+    private double mTotalFittnessScore;//适应性分数之和
     private int mGeneration;
 
     private List<Sgenome> mGenomes = new List<Sgenome>();
@@ -85,10 +85,12 @@ public class CgaBob : MonoBehaviour {
     {
         if (MCurrentGeneCount > totalGeneSize)
             return;
+        mTotalFittnessScore = 0;
         MCurrentGeneCount++;
         UpdateGenome();
     }
 
+    bool hasFindPath = false;
     /// <summary>
     /// 测试路径，并计算适应性
     /// </summary>
@@ -100,9 +102,17 @@ public class CgaBob : MonoBehaviour {
             Sgenome gene = mGenomes[i];
             List<int> cmd = decode(gene.vecBits);
             gene.dFitness = _path.TestRoute(cmd);
+            if (gene.dFitness == 1)
+            {
+                Debug.Log("Find Path");
+                hasFindPath = true;
+                break;
+            }
+            mTotalFittnessScore += gene.dFitness;
             yield return new WaitForSeconds(TestSpeed);
         }
-        Epoch();
+        if(!hasFindPath)
+            Epoch();
         yield return 0;
     }
 
@@ -110,28 +120,27 @@ public class CgaBob : MonoBehaviour {
     /// 更新进化，产生新的种群
     /// </summary>
     void UpdateGenome() {
-        //根据适应性排序
-        mGenomes.Sort((Sgenome x, Sgenome y)=> {
-            return y.dFitness.CompareTo(x.dFitness);
-        });
-        //使用精英选择的方式，取适应性最高的前2(还有一种轮赌盘的选择方式)
-        Sgenome dad = mGenomes[0];
-        Sgenome mum = mGenomes[1];
+        //变比
+        FitnssScaleSigma();
 
-        Debug.Log("当前最高是适应性:" + dad.dFitness);
-        if (dad.dFitness == 1)
-        {
-            Debug.Log("Find Path");
-            return;
-        }
+        Sgenome dad = null; 
+        Sgenome mum = null;
+        //使用精英选择的方式，取适应性最高的前2,容易陷入局部最优解
+        GetParent1(ref dad, ref mum);
+
+        //轮赌盘的选择方式,可以保持子代基因的多样性，
+        //但是最坏情况是适应性更高的基因并没有被遗传下去
+        //dad = GetParent2();
+        //mum = GetParent2();
 
         mGenomes.Clear();
         while (mGenomes.Count < mPopSize) {
 
             Sgenome baby1 = new Sgenome();
             Sgenome baby2 = new Sgenome();
+            //交叉
             Crossover(mum.vecBits, dad.vecBits, baby1.vecBits, baby2.vecBits);
-
+            //突变
             Mutate(baby1.vecBits);
             Mutate(baby2.vecBits);
 
@@ -140,6 +149,61 @@ public class CgaBob : MonoBehaviour {
                 mGenomes.Add(baby2);
         }
         StartCoroutine(testRoute());
+    }
+
+    /// <summary>
+    /// 西格玛变比技术，重新调整适应性
+    /// </summary>
+    void FitnssScaleSigma() {
+        //求平均值
+        double mAvgFiness = 0;
+        foreach (Sgenome s in mGenomes) {
+            mAvgFiness += s.dFitness;
+        }
+        mAvgFiness = mAvgFiness / mGenomes.Count;
+        //计算方差
+        double runningTotal = 0;
+        foreach (Sgenome s in mGenomes) {
+            double diff = s.dFitness - mAvgFiness;
+            runningTotal += (diff * diff);
+        }
+        double variance = runningTotal / mPopSize;
+        //标准偏差
+        double sigma = Math.Sqrt(variance);
+        //循环，重新为每一位成员计算适应性分数
+        for (int i = 0; i < mGenomes.Count; i++) {
+            double oldFit = mGenomes[i].dFitness;
+            mGenomes[i].dFitness = (oldFit - mAvgFiness) / (2 * sigma);
+        }
+    }
+
+    /// <summary>
+    /// 采用精英选择的方式选出可以遗传的父母
+    /// </summary>
+    void GetParent1(ref Sgenome dad,ref Sgenome mum) {
+        //根据适应性排序
+        mGenomes.Sort((Sgenome x, Sgenome y) => {
+            return y.dFitness.CompareTo(x.dFitness);
+        });
+        dad = mGenomes[0];
+        mum = mGenomes[1];
+    }
+
+    /// <summary>
+    /// 采用轮赌盘的方式选取父母，适应性越高，代表可能性越大
+    /// </summary>
+    Sgenome GetParent2() {
+        double fSlice = RandomFloat() * mTotalFittnessScore;
+        double cfTotal = 0;
+        int selected = 0;
+        for (int i = 0; i < mGenomes.Count; i++) {
+            cfTotal += mGenomes[i].dFitness;
+            if (cfTotal > fSlice) {
+                selected = i;
+                break;
+            }
+        }
+        return mGenomes[selected];
     }
 
     /// <summary>
