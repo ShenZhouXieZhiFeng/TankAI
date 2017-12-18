@@ -10,12 +10,11 @@ namespace Radar
         public float MaxSpeed = 10;
         public float MaxTorque = 20;
         public bool IsUserController = false;
-        public int Score = 0;
         public float CheckDis = 10;
         public LayerMask MineLayer;
 
         [HideInInspector]
-        public RadarAgent Agent;
+        public RadarAgent Agent;//智能代理
 
         Rigidbody _rig;
 
@@ -24,24 +23,35 @@ namespace Radar
             _rig = GetComponent<Rigidbody>();
         }
 
-        void Update()
+        //void Update()
+        //{
+        //    //getNearestMineAngle();
+        //    //if (IsUserController)
+        //    //{
+        //    //    float[] input = new float[2];
+
+        //    //    input[0] = Input.GetAxis("Horizontal");
+        //    //    input[1] = Input.GetAxis("Vertical");
+
+        //    //    control(input);
+        //    //}
+        //}
+
+        public void ApplyControl()
         {
-            getNearestMineAngle();
-            if (IsUserController)
-            {
-                float[] input = new float[2];
+            double[] outputs = new double[4];
+            outputs[0] = _rig.velocity.magnitude/MaxSpeed;
+            outputs[1] = _rig.angularVelocity.magnitude/MaxTorque;
+            outputs[2] = transform.forward.magnitude;
+            outputs[3] = getNearestMineAngle();
 
-                input[0] = Input.GetAxis("Horizontal");
-                input[1] = Input.GetAxis("Vertical");
+            double[] input = Agent.updateValue(outputs);
 
-                control(input);
-            }
-            else
-            {
-                float[] output = new float[4];
-                output[0] = _rig.velocity.magnitude;
-                output[1] = _rig.angularVelocity.magnitude;
-            }
+            float h = (float)input[0];
+            float v = (float)input[1];
+
+            _rig.velocity = transform.forward * v * MaxSpeed;
+            _rig.angularVelocity = transform.up * h * MaxTorque;
         }
 
         // 获取扫描范围内最近的地雷,并计算角度
@@ -57,8 +67,11 @@ namespace Radar
                 });
                 tragetPos = mines[0].transform.position;
                 Vector3 mineDir = mines[0].transform.position - transform.position;
-                res = Vector3.SignedAngle(mineDir, transform.forward, transform.up);
-                //res = Vector3.Dot(transform.forward, mineDir.normalized);
+                //res = Vector3.SignedAngle(mineDir, transform.forward, transform.up);
+                float angle = Vector3.Dot(transform.forward, mineDir);
+                //顺逆时针
+                int sign = MathTools.ReturenSign(transform.forward, mineDir);
+                res = sign * angle;
             }
             else
             {
@@ -74,20 +87,19 @@ namespace Radar
                 Gizmos.DrawLine(transform.position, tragetPos);
         }
 
-        void control(float[] input)
+        /// <summary>
+        /// 更新分数
+        /// </summary>
+        void updateScore()
         {
-            float h = (float)input[0];
-            float v = (float)input[1];
-
-            _rig.velocity = transform.forward * v * MaxSpeed;
-            _rig.angularVelocity = transform.up * h * MaxTorque;
+            Agent.AgentScore++;
         }
 
         private void OnCollisionEnter(Collision collision)
         {
             if (collision.transform.CompareTag("Mine"))
             {
-                Score++;
+                updateScore();
                 Destroy(collision.gameObject);
                 MinesManager.Instance.checkMineNums();
             }

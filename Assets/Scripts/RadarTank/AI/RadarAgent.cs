@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,25 +10,32 @@ namespace Radar
     /// </summary>
     public class RadarAgent
     {
-
+        //遗传算子
+        public SGenome Genome;
+        //神经网络
         CNeuronNet neuronNet;
         int neruonPerLyr = 5;
         int bias = -1;
 
-        /// <summary>
-        /// 基因
-        /// </summary>
-        public List<double> NeuronWeights
-        {
-            get
-            {
-                return neuronNet.GetWeights();
+        public double AgentScore {
+            set {
+                Genome.dFitness = value;
             }
-            set
-            {
-                neuronNet.PutWeights(value);
+            get {
+                return Genome.dFitness;
             }
         }
+
+        ///// <summary>
+        ///// 基因
+        ///// </summary>
+        //public List<double> NeuronWeights
+        //{
+        //    get
+        //    {
+        //        return Genome.vecWeights;
+        //    }
+        //}
 
         /// <summary>
         /// 权重数量
@@ -43,6 +51,16 @@ namespace Radar
         public RadarAgent(int inputNum, int outputsNums, int hiddenLayers)
         {
             neuronNet = new CNeuronNet(inputNum, outputsNums, hiddenLayers, neruonPerLyr, bias);
+            Genome = new SGenome(neuronNet.GetWeights());
+        }
+
+        /// <summary>
+        /// 更新神经网络矩阵
+        /// </summary>
+        /// <param name="vecWeights"></param>
+        public void RefreshNeuronNet()
+        {
+            neuronNet.PutWeights(Genome.vecWeights);
         }
 
         /// <summary>
@@ -57,9 +75,18 @@ namespace Radar
     }
 
     #region 遗传算法相关
-    class SGenome
+    public class SGenome
     {
-
+        public List<double> vecWeights;
+        public double dFitness;
+        public SGenome(List<double> w) {
+            dFitness = 0;
+            vecWeights = w;
+        }
+        public double this[int index] {
+            get {return vecWeights[index]; }
+            set { vecWeights[index] = value; }
+        }
     }
     #endregion
 

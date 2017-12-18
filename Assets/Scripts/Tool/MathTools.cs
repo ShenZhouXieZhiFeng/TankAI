@@ -21,4 +21,21 @@ public class MathTools{
         else return (1.0 / (1.0 + System.Math.Exp(-inpute)));
     }
 
+    /// <summary>
+    /// 判断两个向量夹角情况，顺逆时针
+    /// </summary>
+    /// <param name="v1"></param>
+    /// <param name="v2"></param>
+    /// <returns></returns>
+    public static int ReturenSign(Vector3 v1,Vector3 v2) {
+        if (v1.z * v2.x > v1.x * v2.z)
+        {
+            return 1;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+
 }
