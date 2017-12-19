@@ -13,6 +13,8 @@ namespace Radar
         public float CheckDis = 10;
         public LayerMask MineLayer;
 
+        public List<double> ShowWeights;
+
         [HideInInspector]
         public RadarAgent Agent;//智能代理
 
@@ -23,22 +25,9 @@ namespace Radar
             _rig = GetComponent<Rigidbody>();
         }
 
-        //void Update()
-        //{
-        //    //getNearestMineAngle();
-        //    //if (IsUserController)
-        //    //{
-        //    //    float[] input = new float[2];
-
-        //    //    input[0] = Input.GetAxis("Horizontal");
-        //    //    input[1] = Input.GetAxis("Vertical");
-
-        //    //    control(input);
-        //    //}
-        //}
-
         public void ApplyControl()
         {
+            ShowWeights = Agent.Genome.vecWeights;
             double[] outputs = new double[4];
             outputs[0] = _rig.velocity.magnitude/MaxSpeed;
             outputs[1] = _rig.angularVelocity.magnitude/MaxTorque;

@@ -14,8 +14,8 @@ namespace Radar
         public SGenome Genome;
         //神经网络
         CNeuronNet neuronNet;
-        int neruonPerLyr = 5;
-        int bias = -1;
+        int neruonPerLyr = 4;
+        int bias = 1;
 
         public double AgentScore {
             set {
@@ -25,17 +25,6 @@ namespace Radar
                 return Genome.dFitness;
             }
         }
-
-        ///// <summary>
-        ///// 基因
-        ///// </summary>
-        //public List<double> NeuronWeights
-        //{
-        //    get
-        //    {
-        //        return Genome.vecWeights;
-        //    }
-        //}
 
         /// <summary>
         /// 权重数量

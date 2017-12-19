@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class MinesManager : SingletonMono<MinesManager> {
 
+    public Transform Mines;
     public GameObject MinePrefab;
     public Vector4 SpawnDis;
     public int MaxMineNums = 20;
@@ -22,7 +23,7 @@ public class MinesManager : SingletonMono<MinesManager> {
         float x = Random.Range(SpawnDis.x, SpawnDis.y);
         float z = Random.Range(SpawnDis.z, SpawnDis.w);
         GameObject newMine = Instantiate(MinePrefab);
-        newMine.transform.parent = transform;
+        newMine.transform.parent = Mines;
         newMine.transform.position = new Vector3(x, 1, z);
         currentMineNum++;
     }
