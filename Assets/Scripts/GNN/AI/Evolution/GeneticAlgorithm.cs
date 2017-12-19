@@ -259,7 +259,7 @@ public class GeneticAlgorithm
         List<Genotype> intermediatePopulation = Selection(currentPopulation);
 
         //Apply Recombination
-        //应用复合
+        //交叉
         List<Genotype> newPopulation = Recombination(intermediatePopulation, PopulationSize);
 
         //Apply Mutation
@@ -339,8 +339,6 @@ public class GeneticAlgorithm
         intermediatePopulation.Add(currentPopulation[0]);
         intermediatePopulation.Add(currentPopulation[1]);
         intermediatePopulation.Add(currentPopulation[2]);
-
-        TankManager.Instance.Prinf("最高得分为:" + currentPopulation[0].Evaluation);
 
         return intermediatePopulation;
     }

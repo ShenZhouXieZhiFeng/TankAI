@@ -15,26 +15,36 @@ namespace Radar
 
         public List<double> ShowWeights;
 
-        [HideInInspector]
-        public RadarAgent Agent;//智能代理
-
         Rigidbody _rig;
+
+        public Agent Agent
+        {
+            get;
+            set;
+        }
 
         void Start()
         {
             _rig = GetComponent<Rigidbody>();
         }
 
+        public void reStart() {
+
+        }
+
+        public void Stop() {
+
+        }
+
         public void ApplyControl()
         {
-            ShowWeights = Agent.Genome.vecWeights;
-            double[] outputs = new double[4];
+            float[] outputs = new float[4];
             outputs[0] = _rig.velocity.magnitude/MaxSpeed;
             outputs[1] = _rig.angularVelocity.magnitude/MaxTorque;
             outputs[2] = transform.forward.magnitude;
             outputs[3] = getNearestMineAngle();
 
-            double[] input = Agent.updateValue(outputs);
+            float[] input = Agent.FNN.ProcessInputs(outputs);
 
             float h = (float)input[0];
             float v = (float)input[1];
@@ -81,7 +91,7 @@ namespace Radar
         /// </summary>
         void updateScore()
         {
-            Agent.AgentScore++;
+            Agent.Genotype.Evaluation++;
         }
 
         private void OnCollisionEnter(Collision collision)
