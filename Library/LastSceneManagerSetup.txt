@@ -1,0 +1,4 @@
+sceneSetups:
+- path: Assets/GameAI/Scenes/003.unity
+  isLoaded: 1
+  isActive: 1

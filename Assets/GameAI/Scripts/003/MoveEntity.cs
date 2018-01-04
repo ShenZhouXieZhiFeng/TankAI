@@ -19,9 +19,23 @@ namespace GameAI
         [Header("质量")]
         [SerializeField]
         private float mass;
+        [Header("警惕距离")]
+        [SerializeField]
+        private float alertDistance;
         [Header("当前速度")]
         [SerializeField]
         private Vector2 velocity;
+
+        //朝向
+        public Vector2 Heading {
+            get { return transform.up; }
+        }
+        public Vector2 Position {
+            get { return transform.position; }
+        }
+        public float Speed {
+            get { return velocity.magnitude == 0 ? 1 : velocity.magnitude; }
+        }
 
         public float MaxVelocity {
             get { return maxVelocity; }
@@ -41,6 +55,11 @@ namespace GameAI
         public float Mass {
             get { return mass; }
             protected set { mass = value; }
+        }
+
+        public float AlertDistance {
+            get { return alertDistance; }
+            protected set { alertDistance = value; }
         }
 
         public Vector2 Velocity {

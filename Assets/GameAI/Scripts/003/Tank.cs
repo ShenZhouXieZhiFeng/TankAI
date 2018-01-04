@@ -6,10 +6,14 @@ namespace GameAI
 {
     public class Tank : MoveEntity
     {
+        #region Members
         GameWorld _gameWorld;
         SteeringBehaviour _steering;
+        #endregion
 
+        [Header("测试")]
         public bool CanMove = false;
+        public MoveEntity Target;
 
         void Start()
         {
@@ -20,10 +24,10 @@ namespace GameAI
         {
             if (CanMove)
             {
-                if (Input.GetMouseButton(0))
-                {
-                    UpdateTank(_steering.Seek(Camera.main.ScreenToWorldPoint(Input.mousePosition)));
-                }
+                //Vector2 newVel = _steering.Pursute(Target);
+                //Vector2 newVel = _steering.Evade(Target);
+                Vector2 newVel = _steering.Wander();
+                UpdateTank(newVel);
             }
         }
 
@@ -40,13 +44,12 @@ namespace GameAI
 
         private void OnDrawGizmos()
         {
-            Vector2 vec2 = Velocity.normalized * 10;
-            Gizmos.color = Color.red;
-            Gizmos.DrawLine(transform.position, new Vector3(transform.position.x + vec2.x, transform.position.y + vec2.y, transform.position.z));// Velocity.normalized * 10);
-
-            Vector3 up = transform.up * 5;
+            Vector2 vec2 = Velocity.normalized * AlertDistance;
             Gizmos.color = Color.green;
-            Gizmos.DrawLine(transform.position, new Vector3(transform.position.x + up.x, transform.position.x + up.y, transform.position.x + up.z));
+            Gizmos.DrawWireSphere(transform.position, AlertDistance);
+
+            Gizmos.color = Color.blue;
+            Gizmos.DrawLine(transform.position, new Vector3(transform.position.x + vec2.x, transform.position.y + vec2.y, transform.position.z));// Velocity.normalized * 10);
         }
     }
 }
