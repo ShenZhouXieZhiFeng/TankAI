@@ -17,6 +17,6 @@ namespace GameAI
         {
             return Random.Range(0f, 1f);
         }
-        
+
     }
 }

@@ -19,14 +19,14 @@ namespace GameAI
         [Header("质量")]
         [SerializeField]
         private float mass;
-        [Header("警惕距离")]
-        [SerializeField]
+        //[Header("警惕距离")]
+        //[SerializeField]
         private float alertDistance;
-        [Header("当前速度")]
-        [SerializeField]
+        //[Header("当前速度")]
+        //[SerializeField]
         private Vector2 velocity;
-        [Header("当前加速度")]
-        [SerializeField]
+        //[Header("当前加速度")]
+        //[SerializeField]
         private Vector2 acceleratedVel;
 
         //朝向
@@ -80,9 +80,15 @@ namespace GameAI
 
         #region Func
 
-        protected void UpdateEntity()
+        protected void UpdateEntity(Vector2 _steeringForce)
         {
-            TurnCate();
+            Vector2 steeringForce = _steeringForce;
+            Vector2 acceleration = steeringForce / Mass;
+            acceleration = Vector2.ClampMagnitude(acceleration, MaxForce);
+            AcceleratedVeloCity = acceleration;
+
+            Velocity += AcceleratedVeloCity;
+            Velocity = Vector2.ClampMagnitude(Velocity, MaxVelocity);
             UpdatePosition();
             UpdateRotation();
         }
@@ -91,21 +97,10 @@ namespace GameAI
         {
             Position += Velocity * Time.deltaTime;
         }
+
         void UpdateRotation()
         {
             transform.rotation = Quaternion.FromToRotation(Vector3.up, Velocity.normalized);
-        }
-
-        /// <summary>
-        /// 防止速度超过最大速度
-        /// </summary>
-        void TurnCate()
-        {
-            Velocity = Vector2.ClampMagnitude(Velocity, MaxVelocity);
-            //if (Velocity.magnitude > MaxVelocity)
-            //{
-            //    Velocity = Velocity.normalized * MaxVelocity;
-            //}
         }
 
         #endregion

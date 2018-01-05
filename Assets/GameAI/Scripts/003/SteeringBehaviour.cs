@@ -7,27 +7,6 @@ namespace GameAI
 {
     public class SteeringBehaviour
     {
-        private enum behaviour_type
-        {
-            none                = 0x00000,
-            seek                = 0x00002,
-            flee                = 0x00004,
-            arrive              = 0x00008,
-            wander              = 0x00010,
-            cohesion            = 0x00020,
-            separation          = 0x00040,
-            allignment          = 0x00080,
-            obstacle_avoidance  = 0x00100,
-            wall_avoidance      = 0x00200,
-            follow_path         = 0x00400,
-            pursuit             = 0x00800,
-            evade               = 0x01000,
-            interpose           = 0x02000,
-            hide                = 0x04000,
-            flock               = 0x08000,
-            offset_persuit      = 0x10000
-        };
-
         #region members
 
         MoveEntity m_entity;
@@ -38,6 +17,9 @@ namespace GameAI
         const float wandarRadius = 2.0f;
         const float wandarDistance = 1.0f;
         const float wandarJitter = 3.0f;//抖动
+
+        //躲避障碍参数
+        List<TankSensor> sensers;
         #endregion
 
         #region func
@@ -49,9 +31,13 @@ namespace GameAI
             wandarTarget = m_transform.position;
         }
 
-        public Vector2 Calculate()
+        public Vector2 Calculate(Vector2 _targetPos)
         {
-            return Vector2.one;
+            Vector2 newAcce = Vector2.zero;
+
+            newAcce += Arrive(_targetPos, Deceleration.fast);
+
+            return newAcce;
         }
 
         /// <summary>
@@ -90,17 +76,42 @@ namespace GameAI
             return Flee(_target.Position + _target.Velocity * lookAheadTime);
         }
 
+        //public Vector2 AvoidObstacles()
+        //{
+        //    if (sensers == null)
+        //    {
+        //        sensers = new List<TankSensor>(m_transform.GetComponentsInChildren<TankSensor>());
+        //    }
+        //    if (sensers == null)
+        //        return Vector2.zero;
+
+        //    List<float> senserLens = new List<float>();
+        //    foreach (var senser in sensers)
+        //    {
+        //        senserLens.Add(senser.CurrentLength);
+        //    }
+        //    if (senserLens[0] < senserLens[2])
+        //    {
+        //        return m_transform.right * Time.deltaTime;
+        //    }
+        //    else if (senserLens[0] > senserLens[2])
+        //    {
+        //        return -m_transform.right * Time.deltaTime;
+        //    }
+        //    return Vector2.zero;
+        //}
+
         /// <summary>
         /// 徘徊
         /// </summary>
         /// <returns></returns>
-        public Vector2 Wander()
+        Vector2 Wander()
         {
             wandarTarget += new Vector2(AiTools.RandomClamped() * wandarJitter, AiTools.RandomClamped() * wandarJitter);
             wandarTarget = wandarTarget.normalized * wandarRadius;
             Vector2 targetLocal = wandarTarget + Vector2.right * wandarDistance;
             Vector2 targetWorld = m_transform.TransformPoint(targetLocal);
-            return targetWorld - m_entity.Position;
+            return (targetWorld - m_entity.Position);
         }
 
         /// <summary>
@@ -108,10 +119,11 @@ namespace GameAI
         /// </summary>
         /// <param name="_targetPos"></param>
         /// <returns></returns>
-        public Vector2 Seek(Vector2 _targetPos)
+        Vector2 Seek(Vector2 _targetPos)
         {
             Vector2 desirdVelocity = (_targetPos - m_entity.Position).normalized * m_entity.MaxVelocity;
-            return (desirdVelocity - m_entity.Velocity);
+            //乘上Time.deltaTime使得加速度的改变量减小，可以有一种位移偏移的效果
+            return (desirdVelocity - m_entity.Velocity) * Time.deltaTime;
         }
 
         /// <summary>
@@ -119,7 +131,7 @@ namespace GameAI
         /// </summary>
         /// <param name="_targetPos"></param>
         /// <returns></returns>
-        public Vector2 Flee(Vector2 _targetPos)
+        Vector2 Flee(Vector2 _targetPos)
         {
             //进入警惕距离则远离
             float distance = Vector2.Distance(m_entity.Position, _targetPos);
@@ -128,7 +140,7 @@ namespace GameAI
                 return Vector2.zero;
             }
             Vector2 desiredVelocity = (m_entity.Position - _targetPos).normalized * m_entity.MaxVelocity;
-            return (desiredVelocity - m_entity.Velocity);
+            return (desiredVelocity - m_entity.Velocity) * Time.deltaTime;
         }
 
         /// <summary>
@@ -136,15 +148,15 @@ namespace GameAI
         /// </summary>
         /// <param name="_targetPos"></param>
         /// <returns></returns>
-        public Vector2 Arrive(Vector2 _targetPos, Deceleration _decel)
+        Vector2 Arrive(Vector2 _targetPos, Deceleration _decel)
         {
             Vector2 toTarget = _targetPos - m_entity.Position;
             float distance = toTarget.magnitude;
-            if (distance > 0)
+            if (distance > 0.1f)
             {
                 float decelTweaker = 0.3f;
                 float speed = distance / ((int)_decel * decelTweaker);
-                speed = Mathf.Min(speed, m_entity.MaxVelocity);
+                speed = Math.Min(speed, m_entity.MaxVelocity);
                 Vector2 desiredVolecity = toTarget * speed / speed;
                 return (desiredVolecity - m_entity.Velocity);
             }
