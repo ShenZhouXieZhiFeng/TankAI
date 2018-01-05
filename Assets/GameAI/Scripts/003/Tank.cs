@@ -13,7 +13,6 @@ namespace GameAI
 
         [Header("测试")]
         public bool CanMove = false;
-        public MoveEntity Target;
 
         void Start()
         {
@@ -24,10 +23,12 @@ namespace GameAI
         {
             if (CanMove)
             {
-                //Vector2 newVel = _steering.Pursute(Target);
-                //Vector2 newVel = _steering.Evade(Target);
-                Vector2 newVel = _steering.Wander();
-                UpdateTank(newVel);
+                if (Input.GetMouseButton(0))
+                {
+                    //Vector2 newVel = _steering.Seek(AiTools.GetMousePosition());
+                    Vector2 newVel = _steering.Arrive(AiTools.GetMousePosition(), Deceleration.fast);
+                    UpdateTank(newVel);
+                }
             }
         }
 
@@ -35,11 +36,15 @@ namespace GameAI
         {
             Vector2 steeringForce = _steeringForce;
             Vector2 acceleration = steeringForce / Mass;
-            Velocity += acceleration * Time.deltaTime;
+            acceleration = Vector2.ClampMagnitude(acceleration, MaxForce);
+            AcceleratedVeloCity = acceleration;
 
-            TurnCate(Velocity);
-            UpdatePosition();
-            UpdateRotation();
+            Velocity += acceleration * Time.deltaTime;
+            //Velocity = Vector2.ClampMagnitude(Velocity, MaxVelocity);
+
+            //transform.position += (Vector3)(acceleration * Time.deltaTime);
+
+            UpdateEntity();
         }
 
         private void OnDrawGizmos()

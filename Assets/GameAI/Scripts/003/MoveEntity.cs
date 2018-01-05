@@ -25,6 +25,9 @@ namespace GameAI
         [Header("当前速度")]
         [SerializeField]
         private Vector2 velocity;
+        [Header("当前加速度")]
+        [SerializeField]
+        private Vector2 acceleratedVel;
 
         //朝向
         public Vector2 Heading {
@@ -32,6 +35,7 @@ namespace GameAI
         }
         public Vector2 Position {
             get { return transform.position; }
+            private set { transform.position = (Vector3)value; }
         }
         public float Speed {
             get { return velocity.magnitude == 0 ? 1 : velocity.magnitude; }
@@ -67,33 +71,43 @@ namespace GameAI
             protected set { velocity = value; }
         }
 
+        public Vector2 AcceleratedVeloCity {
+            get { return acceleratedVel; }
+            protected set { acceleratedVel = value; }
+        }
+
         #endregion
 
         #region Func
-        protected void UpdatePosition()
+
+        protected void UpdateEntity()
         {
-            Vector2 move = Velocity * Time.deltaTime;
-            Vector3 posOffset = new Vector3(move.x,move.y,0);
-            transform.position += posOffset;
+            TurnCate();
+            UpdatePosition();
+            UpdateRotation();
         }
-        protected void UpdateRotation()
+
+        void UpdatePosition()
+        {
+            Position += Velocity * Time.deltaTime;
+        }
+        void UpdateRotation()
         {
             transform.rotation = Quaternion.FromToRotation(Vector3.up, Velocity.normalized);
         }
+
         /// <summary>
         /// 防止速度超过最大速度
         /// </summary>
-        protected void TurnCate(Vector2 _vel)
+        void TurnCate()
         {
-            if (_vel.magnitude > MaxVelocity)
-            {
-                Velocity = _vel.normalized * MaxVelocity;
-            }
-            else
-            {
-                Velocity = _vel;
-            }
+            Velocity = Vector2.ClampMagnitude(Velocity, MaxVelocity);
+            //if (Velocity.magnitude > MaxVelocity)
+            //{
+            //    Velocity = Velocity.normalized * MaxVelocity;
+            //}
         }
+
         #endregion
 
     }

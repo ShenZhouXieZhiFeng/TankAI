@@ -36,7 +36,7 @@ namespace GameAI
         //徘徊参数
         Vector2 wandarTarget;
         const float wandarRadius = 2.0f;
-        const float wandarDistance = 3.0f;
+        const float wandarDistance = 1.0f;
         const float wandarJitter = 3.0f;//抖动
         #endregion
 
@@ -97,10 +97,10 @@ namespace GameAI
         public Vector2 Wander()
         {
             wandarTarget += new Vector2(AiTools.RandomClamped() * wandarJitter, AiTools.RandomClamped() * wandarJitter);
-            wandarTarget.Normalize();
-            wandarTarget *= wandarRadius;
-            Vector2 targetPos = wandarTarget + new Vector2(wandarDistance, 0);
-            return targetPos - m_entity.Position;
+            wandarTarget = wandarTarget.normalized * wandarRadius;
+            Vector2 targetLocal = wandarTarget + Vector2.right * wandarDistance;
+            Vector2 targetWorld = m_transform.TransformPoint(targetLocal);
+            return targetWorld - m_entity.Position;
         }
 
         /// <summary>
@@ -108,7 +108,7 @@ namespace GameAI
         /// </summary>
         /// <param name="_targetPos"></param>
         /// <returns></returns>
-        Vector2 Seek(Vector2 _targetPos)
+        public Vector2 Seek(Vector2 _targetPos)
         {
             Vector2 desirdVelocity = (_targetPos - m_entity.Position).normalized * m_entity.MaxVelocity;
             return (desirdVelocity - m_entity.Velocity);
@@ -119,7 +119,7 @@ namespace GameAI
         /// </summary>
         /// <param name="_targetPos"></param>
         /// <returns></returns>
-        Vector2 Flee(Vector2 _targetPos)
+        public Vector2 Flee(Vector2 _targetPos)
         {
             //进入警惕距离则远离
             float distance = Vector2.Distance(m_entity.Position, _targetPos);
@@ -136,23 +136,18 @@ namespace GameAI
         /// </summary>
         /// <param name="_targetPos"></param>
         /// <returns></returns>
-        Vector2 Arrive(Vector2 _targetPos, Deceleration _decel)
+        public Vector2 Arrive(Vector2 _targetPos, Deceleration _decel)
         {
             Vector2 toTarget = _targetPos - m_entity.Position;
             float distance = toTarget.magnitude;
             if (distance > 0)
             {
-                const float decelTweaker = 0.3f;
-
-                float speed = distance / ((float)_decel * decelTweaker);
-
+                float decelTweaker = 0.3f;
+                float speed = distance / ((int)_decel * decelTweaker);
                 speed = Mathf.Min(speed, m_entity.MaxVelocity);
-
-                Vector2 desiredVolecity = toTarget * speed / distance;
-
+                Vector2 desiredVolecity = toTarget * speed / speed;
                 return (desiredVolecity - m_entity.Velocity);
             }
-
             return Vector2.zero;
         }
 
@@ -164,9 +159,9 @@ namespace GameAI
         float TurnAroundTime(Vector2 _targetPos)
         {
             Vector2 toTarget = (_targetPos - m_entity.Position).normalized;
-            float dot = Vector2.Dot(m_entity.Heading, toTarget);
+            float dot = Vector2.Dot(m_entity.Heading.normalized, toTarget);
             //旋转的比率时间，与载体的最大旋转有关
-            const float coeffcient = 0.5f;
+            float coeffcient = 0.5f;
             //如果目标直接在前方，dot = 1
             //如果目标在后方，dot = -1
             return (dot - 1) * -coeffcient;
